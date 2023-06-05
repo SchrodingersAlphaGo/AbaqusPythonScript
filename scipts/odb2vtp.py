@@ -1,9 +1,10 @@
 import numpy as np
 from mylib.myPolyData import save_polydata
+from mylib.myfunc import pathCheckAndMakeEmpty,dirCheck
 import os
 from HelpfulFunction import *
 
-def odb2vtp(script, args, polyType):   
+def odb2vtp(script, args, polyType, fileName='', vtpPath='./'):   
     abaqus = os.environ.get("ABAQUS_BAT_PATH", "abaqus")
     print(f"{abaqus} python {script} {args}")
 
@@ -26,17 +27,25 @@ def odb2vtp(script, args, polyType):
 
     pd = addPoints(pos0)
     addPolys(eles, pd, polyType)
-    save_polydata(pd, "pos0.vtp")
+    vtpPath = dirCheck(vtpPath)
+    pathCheckAndMakeEmpty(vtpPath)
+    if fileName:
+        save_polydata(pd, vtpPath + fileName+'_0.vtp')
+    else:
+        save_polydata(pd, vtpPath + "pos_0.vtp")
 
     setPoints(pos1, pd)
     addNodeVariable(U, pd, "displacement")
     addNodeVariable(UR, pd, "displacement-rotation")
     addNodeVariable(V, pd, "velocity")
     addNodeVariable(VR, pd, "velocity-rotation")
-    save_polydata(pd, "pos1.vtp")
+    if fileName:
+        save_polydata(pd, vtpPath + fileName+'_1.vtp')
+    else:
+        save_polydata(pd, vtpPath + "pos_1.vtp")
 
 
-def data2particle():
+def data2particle(filePathRoot, midName, meshfactor=1, vtpPath='./'):
     pos0 = np.loadtxt("./tempData/position_0.csv", delimiter=',')
     pos1 = np.loadtxt("./tempData/DefCoor.csv", delimiter=',')
     eles = np.loadtxt("./tempData/elementsIds.csv", dtype=int, delimiter=',')
@@ -45,14 +54,23 @@ def data2particle():
     UR = np.loadtxt("./tempData/UR.csv", delimiter=',')
     V = np.loadtxt("./tempData/V.csv", delimiter=',')
     VR = np.loadtxt("./tempData/VR.csv", delimiter=',')
+    print("Data is loaded.")
 
-    meshfactor = 1
     Pos0, Area0, Normal0 = calcCenterAreaNormal(pos0, eles, meshfactor)
     pd0 = addPoints(Pos0)
     addVertex(pd0)
     addNodeVariable(Normal0,pd0, "Normal")
     addNodeVariable(Area0, pd0, "Area")
-    save_polydata(pd0, "particle0.vtp")
+
+    # output initial data
+    filePathRoot = dirCheck(filePathRoot)
+    vtpPath = dirCheck(vtpPath)
+    pathCheckAndMakeEmpty(filePathRoot)
+    save_polydata(pd0, vtpPath + "particle0.vtp")
+    output(filePathRoot + "PositionData0.txt", Pos0)
+    output(filePathRoot + "NormalData0.txt", Normal0)
+    output(filePathRoot + "AreaQuadrangleData0.txt", Area0)
+    print("Initial data is done.")
 
     Pos1, Area1, Normal1 = calcCenterAreaNormal(pos1, eles, meshfactor)
     U1 = calcVariableOfElements(U, eles)
@@ -68,8 +86,15 @@ def data2particle():
     addNodeVariable(UR1, pd1, "displacement-rotation")
     addNodeVariable(V1, pd1, "velocity")
     addNodeVariable(VR1, pd1, "velocity-rotation")
-    save_polydata(pd1, "particle1.vtp")
+    save_polydata(pd1, vtpPath + "particle1.vtp")
 
+    output(filePathRoot + "PositionData" + midName + ".txt", Pos1)
+    output(filePathRoot + "NormalData" + midName + ".txt", Normal1)
+    output(filePathRoot + "AreaQuadrangleData" + midName + ".txt", Area1)
+    output(filePathRoot + "Variable-UR" + midName + ".txt", UR1)
+    output(filePathRoot + "Variable-V" + midName + ".txt", V1)
+    output(filePathRoot + "Variable-VR" + midName + ".txt", VR1)
+    print("Deformed data is done.")
 
 
 if __name__ == "__main__":

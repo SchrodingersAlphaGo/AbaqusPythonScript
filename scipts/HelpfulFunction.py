@@ -178,7 +178,7 @@ def output(fileName, data) -> None:
     with open(fileName, 'w', newline='') as f:
         for i in range(len(data)):
             p = data[i]
-            if len(data.shape) == 3:
+            if len(data.shape) == 2:
                 row = '%.8f \t%.8f \t%.8f'%(p[0],p[1],p[2])
             elif len(data.shape) == 1:
                 row = '%.8f \t%.8f \t%.8f'%(p,0,0)
