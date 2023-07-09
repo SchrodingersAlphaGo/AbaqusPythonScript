@@ -33,7 +33,7 @@ def addVertex(pd, nodes=None):
 def setPoints(nodes, pd) -> None:
     '''replace the points of a polydata obj with new points'''
     if not pd.GetNumberOfPoints() == len(nodes):
-        print("nodes number(%d) =/= pd.points number(%d)\nthe nodes cannot match the Polydata"%(len(nodes), pd.GetNumberOfPoints()))
+        raise Exception("nodes number(%d) =/= pd.points number(%d)\nthe nodes cannot match the Polydata"%(len(nodes), pd.GetNumberOfPoints()))
         exit(1)
     for i in range(len(nodes)):
         p = tuple(nodes[i])
@@ -79,9 +79,8 @@ def addPolys(elementIds, pd, polyType) -> None:
 
 def addNodeVariable(varArray, pd, varName) -> None:
     if not pd.GetNumberOfPoints() == len(varArray):
-        print( "variable-array number(%d) =/= pd.points number(%d)\n\
+        raise Exception( "variable-array number(%d) =/= pd.points number(%d)\n\
             the variable-array cannot match the Polydata"%(len(varArray), pd.GetNumberOfPoints()))
-        exit(1)
 
     dim = len(varArray.shape)
     varVec = vtk.vtkFloatArray()
@@ -215,4 +214,8 @@ def rotateNodes(nodes, axis:str, degree):
             rotation2d(nn[i0],nn[i1], angle=degree)
     return newNodes
         
-
+def reflectNodes(nodes, axis:str):
+    newNodes = nodes.copy()
+    if axis == "x":
+        newNodes[:,0] *= -1.0
+    return newNodes

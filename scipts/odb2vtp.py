@@ -4,11 +4,12 @@ from mylib.myfunc import pathCheckAndMakeEmpty,dirCheck
 import os
 from HelpfulFunction import *
 
-def odb2vtp(script, args, polyType, fileName='', vtpPath='./'):   
+def odb2vtp(script, args, polyType, fileName='', vtpPath='./', outputVariable=True):   
     abaqus = os.environ.get("ABAQUS_BAT_PATH", "abaqus")
     print(f"{abaqus} python {script} {args}")
 
     os.system(f"{abaqus} python {script} {args}")
+    print("Abaqus python is done.")
 
     pos0 = np.loadtxt("./tempData/position_0.csv", delimiter=',')
     pos1 = np.loadtxt("./tempData/DefCoor.csv", delimiter=',')
@@ -17,32 +18,38 @@ def odb2vtp(script, args, polyType, fileName='', vtpPath='./'):
 
     eles = np.loadtxt("./tempData/elementsIds.csv", dtype=int, delimiter=',')
 
-    # pos0 = rotateNodes(pos0,"x", 90)
-    # pos1 = rotateNodes(pos1,"x", 90)
+    # pos0 = rotateNodes(pos0,"y", -90)
+    # pos1 = rotateNodes(pos1,"y", -90)
+
+    # pos0 = reflectNodes(pos0, "x")
+    # pos1 = reflectNodes(pos1, "x")
 
     U = np.loadtxt("./tempData/U.csv", delimiter=',')
-    UR = np.loadtxt("./tempData/UR.csv", delimiter=',')
-    V = np.loadtxt("./tempData/V.csv", delimiter=',')
-    VR = np.loadtxt("./tempData/VR.csv", delimiter=',')
+    if outputVariable:
+        UR = np.loadtxt("./tempData/UR.csv", delimiter=',')
+        V = np.loadtxt("./tempData/V.csv", delimiter=',')
+        VR = np.loadtxt("./tempData/VR.csv", delimiter=',')
 
     pd = addPoints(pos0)
     addPolys(eles, pd, polyType)
     vtpPath = dirCheck(vtpPath)
     pathCheckAndMakeEmpty(vtpPath)
     if fileName:
-        save_polydata(pd, vtpPath + fileName+'_0.vtp')
+        save_polydata(pd, vtpPath + fileName+'_init.vtp')
     else:
-        save_polydata(pd, vtpPath + "pos_0.vtp")
+        save_polydata(pd, vtpPath + "initial_pos.vtp")
 
     setPoints(pos1, pd)
-    addNodeVariable(U, pd, "displacement")
-    addNodeVariable(UR, pd, "displacement-rotation")
-    addNodeVariable(V, pd, "velocity")
-    addNodeVariable(VR, pd, "velocity-rotation")
+    addNodeVariable(U, pd, "Displacement")
+    if outputVariable:
+        addNodeVariable(UR, pd, "Rotation")
+        addNodeVariable(V, pd, "Velocity")
+        addNodeVariable(VR, pd, "AngularVeloctiy")
     if fileName:
-        save_polydata(pd, vtpPath + fileName+'_1.vtp')
+        save_polydata(pd, vtpPath + fileName+'.vtp')
+        # save_polydata(pd, vtpPath + fileName+'.vtp', binary=True)
     else:
-        save_polydata(pd, vtpPath + "pos_1.vtp")
+        save_polydata(pd, vtpPath + "deformed_pos.vtp")
 
 
 def data2particle(filePathRoot, midName, meshfactor=1, vtpPath='./'):
@@ -82,10 +89,10 @@ def data2particle(filePathRoot, midName, meshfactor=1, vtpPath='./'):
     addVertex(pd1)
     addNodeVariable(Area1, pd1, "Area")
     addNodeVariable(Normal1, pd1,"Normal")
-    addNodeVariable(U1, pd1, "displacement")
-    addNodeVariable(UR1, pd1, "displacement-rotation")
-    addNodeVariable(V1, pd1, "velocity")
-    addNodeVariable(VR1, pd1, "velocity-rotation")
+    addNodeVariable(U1, pd1, "Displacement")
+    addNodeVariable(UR1, pd1, "Rotation")
+    addNodeVariable(V1, pd1, "Velocity")
+    addNodeVariable(VR1, pd1, "AngularVelocity")
     save_polydata(pd1, vtpPath + "particle1.vtp")
 
     output(filePathRoot + "PositionData" + midName + ".txt", Pos1)

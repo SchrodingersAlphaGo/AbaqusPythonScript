@@ -47,6 +47,7 @@ np.savetxt('./tempData/elementsIds.csv', eleIdList, fmt="%d",  delimiter=',')
 
 
 varialeList = ["U", "UR", "V", "VR"]
+# varialeList = ["U"]
 
 step1 = odb.steps[stepName]
 Frame = step1.frames[frameId]
